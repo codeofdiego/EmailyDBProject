@@ -5,6 +5,7 @@ const cookieSession = require('cookie-session')
 const passport = require('passport')
 const bodyParser = require('body-parser')
 require('./models/User')
+require('./models/Survey')
 require('./services/passport')
 
 // Connect to DB
@@ -29,6 +30,7 @@ app.use(passport.session())
 // Setup routes
 require('./routes/authRoutes')(app)
 require('./routes/billingRoutes')(app)
+require('./routes/surveysRoutes')(app)
 
 // Setup production client serving
 if (process.env.NODE_ENV === 'production') {
