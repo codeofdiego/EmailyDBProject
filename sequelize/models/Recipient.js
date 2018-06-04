@@ -1,7 +1,7 @@
 const Sequelize = require('sequelize')
 const db = require('../db')
 
-const sqRecipient = db.define('recipient', {
+const sqRecipient = db.define('recipients', {
 	email: {
 			type: Sequelize.STRING,
 			primaryKey: true,
@@ -10,6 +10,6 @@ const sqRecipient = db.define('recipient', {
 			type: Sequelize.BOOLEAN,
 			defaultValue: false,
 	}
-	}).sync()
+	})
 
   module.exports = sqRecipient
