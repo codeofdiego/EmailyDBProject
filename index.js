@@ -4,11 +4,19 @@ const keys = require('./config/keys')
 const cookieSession = require('cookie-session')
 const passport = require('passport')
 const bodyParser = require('body-parser')
+// Initialize Sequelize DB and test connection
+require('./sequelize/db')
+
+// Initialize Sequelize models
+require('./sequelize/models/User')
+require('./sequelize/models/Survey')
+
+// Initialize  mongoDB models
 require('./models/User')
 require('./models/Survey')
 require('./services/passport')
 
-// Connect to DB
+// Connect to mongoDB
 mongoose.connect(keys.mongoURI)
 
 // Initialize app
