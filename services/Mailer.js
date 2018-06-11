@@ -3,8 +3,11 @@ const helper = sendgrid.mail
 const keys = require('../config/keys')
 
 class Mailer extends helper.Mail {
-  constructor({ subject, recipients }, content) {
+  constructor(survey, content, recipients) {
     super()
+    const subject = survey.get('subject')
+    console.log('SUBJECT', subject)
+    console.log('recipients', recipients)
 
     this.sgApi = sendgrid(keys.sendGridKey)
     this.from_email = new helper.Email('no-reply@emaily.com')

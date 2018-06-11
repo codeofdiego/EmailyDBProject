@@ -5,12 +5,15 @@ const cookieSession = require('cookie-session')
 const passport = require('passport')
 const bodyParser = require('body-parser')
 // Initialize Sequelize DB and test connection
-require('./sequelize/db')
+const db = require('./sequelize/db')
 
 // Initialize Sequelize models
-require('./sequelize/models/User')
 require('./sequelize/models/Survey')
 
+// Sync DB
+db.sync(
+  // {force: true}
+)
 // Initialize  mongoDB models
 require('./models/User')
 require('./models/Survey')

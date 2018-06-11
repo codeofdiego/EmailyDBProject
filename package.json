@@ -31,8 +31,10 @@
     "path-parser": "^4.0.3",
     "pg": "^7.4.3",
     "pg-hstore": "^2.3.2",
+    "redis": "^2.8.0",
     "sendgrid": "^5.2.3",
     "sequelize": "^4.37.10",
+    "sequelize-redis-cache": "^2.0.1",
     "stripe": "^5.8.0"
   }
 }

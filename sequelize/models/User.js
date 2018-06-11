@@ -9,7 +9,8 @@ const sqUser = db.define('users', {
   credits: {
     type: Sequelize.INTEGER,
     defaultValue: 0,
-  }
+  },
+  name: Sequelize.STRING,
 })
 
 module.exports = sqUser

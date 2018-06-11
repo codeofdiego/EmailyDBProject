@@ -7,6 +7,7 @@ const sqSurvey = db.define('surveys', {
 	id: {
 			type: Sequelize.INTEGER,
 			primaryKey: true,
+			autoIncrement: true,
 	},
 	title: Sequelize.STRING,
 	body: Sequelize.STRING,
@@ -18,8 +19,8 @@ const sqSurvey = db.define('surveys', {
 })
 
 // Setup Associations
-sqSurvey.belongsTo(sqUser, {as: '_user'})
-sqSurvey.belongsToMany(sqRecipient, {as: 'recipients', through: 'SurveyRecipients'})
-sqRecipient.belongsToMany(sqSurvey, {as: 'surveys', through: 'SurveyRecipients'})	
+sqSurvey.belongsTo(sqUser, {foreignKey: 'userId'})
+sqSurvey.belongsToMany(sqRecipient, {through: 'surveys_recipients'})
+sqRecipient.belongsToMany(sqSurvey, {through: 'surveys_recipients'})
 
 module.exports = sqSurvey

@@ -8,14 +8,22 @@ const Mailer = require('../services/Mailer')
 const surveyTemplate = require('../services/emailTemplates/surveyTemplate')
 
 const Survey = mongoose.model('surveys')
+const sqSurvey = require('../sequelize/models/Survey')
+const sqRecipient = require('../sequelize/models/Recipient')
+const sqUser = require('../sequelize/models/User')
 
 module.exports = app => {
 
     app.get('/api/surveys', requireLogin, async (req, res) => {
-      const surveys = await Survey.find({ _user: req.user.id })
-        .select({ recipients: false })
-
-      res.send(surveys)
+      // const surveys = await Survey.find({ _user: req.user.id })
+      //   .select({ recipients: false })
+      const surveys = await sqSurvey.findAll({
+        where: {
+          userId: req.user.googleId,
+        },
+        raw: true,
+      })
+      res.send(surveys || [])
     })
 
     app.get('/api/surveys/:surveyId/:choice', (req, res) => {
@@ -23,12 +31,17 @@ module.exports = app => {
     })
 
     app.post('/api/surveys/webhooks', (req, res) => {
+
+      console.log(req)
       const p = new Path('/api/surveys/:surveyId/:choice')
 
       _.chain(req.body)
         .map(({email, url}) => {
+
+          console.log(email, url)
           const match = p.test(new URL(url).pathname)
 
+          console.log(email, url, match)
           if (match) {
             return { email, surveyId: match.surveyId, choice: match.choice}
           }
@@ -36,44 +49,63 @@ module.exports = app => {
         .compact()
         .uniqBy('email', 'surveyId')
         .each(({ surveyId, email, choice }) => {
-          Survey.updateOne({
-            _id: surveyId,
-            recipients: {
-              $elemMatch: { email: email, responded: false }
-            }
-          }, {
-            $inc: { [choice]: 1 },
-            $set: { 'recipients.$.responded': true },
-            lastResponded: new Date()
-          }).exec()
+          console.log(surveyId, email, choice)
+          sqSurvey.findById(surveyId)
+            .then(survey => {
+              survey.increment(choice, {by: 1})
+            })
+
+          sqSurvey.update({
+            lastResponded: new Date(),
+          })
         })
         .value()
 
       res.send({})
     })
 
-    app.post('/api/surveys', requireLogin, requireCredits, async (req, res) => {
-      const { title, subject, body, recipients } = req.body
-
-      const survey = new Survey({
-        title,
-        subject,
-        body,
-        recipients: recipients.split(',').map(email => ({ email: email.trim() })),
-        _user: req.user.id,
-        dateSent: Date.now()
-      })
-
-      // Send email
-      const mailer = new Mailer(survey, surveyTemplate(survey))
-
+    app.post('/api/surveys', requireLogin, async (req, res) => {
+      const { title, subject, body, recipients, group} = req.body
+      // const survey = new Survey({
+      //   title,
+      //   subject,
+      //   body,
+      //   recipients: recipients.split(',').map(email => ({ email: email.trim() })),
+      //   _user: req.user.id,
+      //   dateSent: Date.now()
+      // })
+      let survey = null
       try {
-        await mailer.send()
-        await survey.save()
-        req.user.credits -= 1
-        const user = await req.user.save()
+        const recipientsArray = recipients.split(',')
+        let dbRecipients = []
+        for (let i = 0; i < recipientsArray.length; i++) {
+          let recipient = await sqRecipient.findOrCreate({
+            where: {email: recipientsArray[i]},
+            defaults: {email: recipientsArray[i]},
+          }).spread((recipient, created) => recipient)
+          dbRecipients.push(recipient)
+        }
 
-        res.send(user)
+
+        survey = await sqSurvey.create({
+          title,
+          subject,
+          body,
+          userId: req.user.googleId,
+          dateSent: Date.now(),
+        })
+
+        await survey.addRecipients(dbRecipients)
+
+        // Send email
+        const mailer = new Mailer(survey, surveyTemplate(survey.get({plain: true})), await survey.getRecipients({raw: true}))
+
+        await mailer.send()
+
+        const user = await sqUser.findById(req.user.googleId)
+        user.decrement('credits', {by: 1})
+
+        res.status(201).send(user.get({plain: true}))
       } catch (err) {
         res.status(422).send(err)
       }
