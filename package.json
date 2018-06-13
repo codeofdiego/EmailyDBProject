@@ -11,7 +11,10 @@
     "start": "node index.js",
     "server": "nodemon index.js",
     "client": "npm run start --prefix client",
-    "dev": "concurrently \"npm run server\" \"npm run client\" \"npm run webhook\"",
+    "redis": "redis-server",
+    "clear": "rm -Rf ./client/node_modules && rm -Rf ./node_modules",
+    "init": "npm run clear && cd client/ && npm install && cd .. && npm install",
+    "dev": "concurrently \"npm run redis\" \"npm run server\" \"npm run client\" \"npm run webhook\"",
     "heroku-postbuild": "NPM_CONFIG_PRODUCTION=false npm install --prefix client && npm run build --prefix client",
     "webhook": "lt -p 5000 -s asiufhab"
   },
